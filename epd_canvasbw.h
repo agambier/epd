@@ -11,11 +11,10 @@ class CanvasBW : public Canvas
 	public:
 		//
 		//
-		CanvasBW() : 
+		CanvasBW() :
 			Canvas( _width_, _height_ ),
 			m_alignedHeight( _height_ + ( ( _height_ % 8 ) ? 8 - ( _height_ % 8 ) : 0 ) )
 		{
-			fillScreen( Epd::Canvas::White );
 		}
 
 		//
@@ -26,7 +25,7 @@ class CanvasBW : public Canvas
 				return;
 
 			static const PROGMEM uint8_t bits[] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 }; 
-			uint8_t *ptr = image( x, y );
+			uint8_t *ptr = const_cast< uint8_t* >( image( x, y ) );
 			switch( color )
 			{
 				case Canvas::White:
@@ -69,6 +68,14 @@ class CanvasBW : public Canvas
 		{
 			return &m_buffer[ ( ( ( width() - 1 - x ) * m_alignedHeight ) + y ) / 8 ];
 		}
+
+		//
+		//
+		void setRotation(uint8_t /*r*/)
+		{
+			Canvas::setRotation( 0 );
+		}
+
 
 	protected:
 		inline void swap( int16_t &x, int16_t &y )

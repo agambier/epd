@@ -237,20 +237,17 @@ void Display::sendData( uint8_t data )
 //
 void Display::clear() 
 {
-	setMemoryPointer( 0, 0 );
-    sendCommand( WRITE_RAM );
 	uint16_t size = m_width * m_heightBytes;
-	for( uint16_t i = 0; i < size; i++ )
+	for( uint8_t loop = 0; loop < 2; loop ++ )
 	{
-		sendData( 0xff );
-	}
-	if( m_fullUpdate )
-	{
-		setMemoryPointer( 0, 0 );
-		sendCommand( WRITE_SHADOW_RAM );
-		for( uint16_t i = 0; i < size; i++ )
+		if( !loop || m_fullUpdate )
 		{
-			sendData( 0xff );
+			setMemoryPointer( 0, 0 );
+			sendCommand( !loop ? WRITE_RAM : WRITE_SHADOW_RAM );
+			for( uint16_t i = 0; i < size; i++ )
+			{
+				sendData( 0xff );
+			}
 		}
 	}
 }
@@ -279,21 +276,28 @@ void Display::setMemoryPointer( uint8_t x, uint8_t y )
 
 //
 //
-void Display::copy( uint8_t x, uint8_t y, Canvas &canvas )
+void Display::copy( Canvas &canvas, uint8_t x, uint8_t y, uint8_t width, uint8_t height )
 {
-	uint8_t drawn_width = min( static_cast< uint16_t >( canvas.width() ), m_width );
-	uint8_t drawn_height = min( static_cast< uint16_t >( canvas.height() ), m_height );
+	uint8_t drawn_width = min( width ? width : static_cast< uint16_t >( canvas.width() ), m_width );
+	uint8_t drawn_height = min( height ? height : static_cast< uint16_t >( canvas.height() ), m_height );
 	uint8_t bytes = ( drawn_height + 7 ) / 8;
 	
-	for( uint8_t idx1 = 0; idx1 < drawn_width; idx1++ )
+	for( uint8_t loop = 0; loop < 2; loop++ )
 	{
-		const uint8_t *image = canvas.image( idx1, 0 );
-		setMemoryPointer( m_width - 1 - idx1 - x, y );
-		sendCommand( WRITE_RAM );
-		for( uint8_t i = 0; i < bytes; i ++ )
+		if( !loop || m_fullUpdate )
 		{
-			sendData( *image );
-			image++;
+			uint8_t cmd = !loop ? WRITE_RAM : WRITE_SHADOW_RAM;
+			for( uint8_t idx1 = 0; idx1 < drawn_width; idx1++ )
+			{
+				const uint8_t *image = canvas.image( idx1, 0 );
+				setMemoryPointer( m_width - 1 - idx1 - x, y );
+				sendCommand( cmd );
+				for( uint8_t i = 0; i < bytes; i ++ )
+				{
+					sendData( *image );
+					image++;
+				}
+			}
 		}
 	}
 	

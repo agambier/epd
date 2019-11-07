@@ -24,7 +24,7 @@ class Display
 		
 		void clear();
 		void update();
-		void copy( uint8_t x, uint8_t y, Canvas &canvas );
+		void copy( Canvas &canvas, uint8_t x = 0, uint8_t y = 0, uint8_t width = 0, uint8_t height = 0 );
 
 	private:
 		uint16_t m_width, m_height;
