@@ -1,0 +1,87 @@
+#ifndef __epd_canvasbw_H__
+#define __epd_canvasbw_H__
+//https://github.com/adafruit/Adafruit_EPD/blob/master/Adafruit_SSD1675B.cpp
+#include "epd_canvas.h"
+
+namespace Epd
+{
+template< uint8_t _width_, uint8_t _height_ >
+class CanvasBW : public Canvas
+{
+	public:
+		//
+		//
+		CanvasBW() : 
+			Canvas( _width_, _height_ ),
+			m_alignedHeight( _height_ + ( ( _height_ % 8 ) ? 8 - ( _height_ % 8 ) : 0 ) )
+		{
+			fillScreen( Epd::Canvas::White );
+		}
+
+		//
+		//
+		void drawPixel( int16_t x, int16_t y, uint16_t color )
+		{
+			if( ( x >= width() ) || ( y >= height() ) )
+				return;
+
+			static const PROGMEM uint8_t bits[] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 }; 
+			uint8_t *ptr = image( x, y );
+			switch( color )
+			{
+				case Canvas::White:
+					*ptr |= pgm_read_byte( &bits[ y % 8 ] );
+					break;
+				case Canvas::Inverse:
+					*ptr ^= pgm_read_byte( &bits[ y % 8 ] );
+					break;
+				default:
+				case Canvas::Black:
+					*ptr &= ~pgm_read_byte( &bits[ y % 8 ] );
+					break;
+			}
+		}
+
+		//
+		//
+		void fillScreen( uint16_t color )
+		{
+	        memset( m_buffer, ( color == Canvas::Black ) ? 0x00 : 0xff, memorySize() );
+		}
+
+		//
+		//
+		uint16_t memorySize() const
+		{
+			return sizeof( m_buffer );
+		}
+
+		//
+		//
+		const uint8_t* image() const
+		{
+			return m_buffer;
+		}
+
+		//
+		//
+		const uint8_t* image( uint8_t x, uint8_t y ) const
+		{
+			return &m_buffer[ ( ( ( width() - 1 - x ) * m_alignedHeight ) + y ) / 8 ];
+		}
+
+	protected:
+		inline void swap( int16_t &x, int16_t &y )
+		{
+			x ^= y;
+			y ^= x;
+			x ^= y;
+		}
+	private:
+		uint8_t m_alignedHeight;
+		uint8_t m_buffer[ _width_ * ( ( _height_ + 7 ) / 8 ) ];
+};
+
+}
+
+#endif
