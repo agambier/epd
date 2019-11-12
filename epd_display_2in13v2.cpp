@@ -7,58 +7,34 @@ namespace Epd
 
 //
 //
-Display_2in13v2::Display_2in13v2( uint16_t width, uint16_t height, Gpio::Pin *cs, Gpio::Pin *dc, Gpio::Pin *reset, Gpio::Pin *busy ) :
-	m_width( width ),
-	m_height( height ),
-	m_blockSize( ( height + 7 ) / 8 ),
-	m_cs( cs ), 
-	m_dc( dc ),
-	m_reset( reset ),
-	m_busy( busy ),
-	m_fullUpdate( true )
+Display_2in13v2::Display_2in13v2( bool landscape, Gpio::Pin *cs, Gpio::Pin *dc, Gpio::Pin *reset, Gpio::Pin *busy ) :
+	Display( landscape ? 250 : 122, landscape ? 122 : 250, cs, dc, reset, busy ),
+	m_lanscape( landscape ),
+	m_blockSize( ( ( landscape ? m_height : m_width ) + 7 ) / 8 )
 {
 }
 
 //
 //
-bool Display_2in13v2::initializePins()
+void Display_2in13v2::hardReset()
 {
-	if( ( nullptr == m_cs ) || ( nullptr == m_dc ) )
-		return false;
+	if( nullptr == m_reset )
+		return;
 
-	//	CS
-	m_cs->setActiveLow();
-	m_cs->setMode( OUTPUT );
-
-	//	DC
-	m_dc->setActiveHigh();
-	m_dc->setMode( OUTPUT );
-
-	//	Reset
-	if( nullptr != m_reset )
-	{
-		m_reset->setActiveLow();
-		m_reset->setMode( OUTPUT );
-	}
-
-	//	busy
-	if( nullptr != m_busy )
-	{
-		m_busy->setActiveHigh();
-		m_busy->setMode( INPUT );
-	}
-
-	return true;
+	m_reset->activate();
+	delay( 200 );
+	m_reset->deactivate();
+	delay( 200 );
 }
 
 //
 //
-bool Display_2in13v2::begin( bool fullUpdate )
+bool Display_2in13v2::activate( bool fullUpdate )
 {
 	if( ( nullptr == m_cs ) || ( nullptr == m_dc ) )
 		return false;
 
-	m_fullUpdate = fullUpdate;
+	m_fullUpdated = fullUpdate;
 	waitUntilIdle();
     if( fullUpdate) 
 	{
@@ -113,46 +89,18 @@ bool Display_2in13v2::begin( bool fullUpdate )
 	sendCommand( DATA_ENTRY_MODE_SETTING ); 
 	sendData( 0x03 );
 
-
-
     sendCommand( SET_RAM_AXIS1_ADDRESS_START_END_POSITION );
     sendData( 0 );
     sendData( ( m_blockSize - 1 ) & 0x3f );
     sendCommand( SET_RAM_AXIS2_ADDRESS_START_END_POSITION );
     sendData( 0 );
     sendData( 0 );
-    sendData( ( m_width - 1 ) & 0xff );
+    sendData( ( ( m_lanscape ? m_width : m_height ) - 1 ) & 0xff );
     sendData( 0 );
 
 	waitUntilIdle();
 
 	return true;
-}
-
-//
-//
-void Display_2in13v2::reset()
-{
-	if( nullptr == m_reset )
-		return;
-
-	m_reset->activate();
-	delay( 200 );
-	m_reset->deactivate();
-	delay( 200 );
-}
-
-//
-//
-void Display_2in13v2::waitUntilIdle() 
-{
-	if( nullptr == m_busy )
-		return;
-
-    while( m_busy->isActive() )
-	{
-        delay(10);
-    }      
 }
 
 //
@@ -190,7 +138,7 @@ void Display_2in13v2::initializeLut()
 					
 	const uint8_t *ptr;
 	uint8_t size;
-	if( m_fullUpdate )
+	if( m_fullUpdated )
 	{
 		ptr = full;
 		size = sizeof( full );
@@ -237,10 +185,10 @@ void Display_2in13v2::sendData( uint8_t data )
 //
 void Display_2in13v2::clear() 
 {
-	uint16_t size = m_width * m_blockSize;
+	uint16_t size = ( m_lanscape ? m_width : m_height ) * m_blockSize;
 	for( uint8_t loop = 0; loop < 2; loop ++ )
 	{
-		if( !loop || m_fullUpdate )
+		if( !loop || m_fullUpdated )
 		{
 			setMemoryPointer( 0, 0 );
 			sendCommand( !loop ? WRITE_RAM : WRITE_SHADOW_RAM );
@@ -257,7 +205,7 @@ void Display_2in13v2::clear()
 void Display_2in13v2::update() 
 {
     sendCommand( DISPLAY_UPDATE_CONTROL_2 );
-    sendData( m_fullUpdate ? 0xC7 : 0x0C );
+    sendData( m_fullUpdated ? 0xC7 : 0x0C );
     sendCommand( MASTER_ACTIVATION );
     waitUntilIdle();
 }
@@ -267,41 +215,57 @@ void Display_2in13v2::update()
 void Display_2in13v2::setMemoryPointer( uint8_t x, uint8_t y ) 
 {
     sendCommand( SET_RAM_AXIS1_ADDRESS_COUNTER );
-    sendData( ( y >> 3 ) & 0x3F );
+    sendData( ( ( m_lanscape ? y : x ) >> 3 ) & 0x3F );
     sendCommand( SET_RAM_AXIS2_ADDRESS_COUNTER );
-    sendData( x );
+    sendData( m_lanscape ? x : y );
     sendData( 0 );
     waitUntilIdle();
 }
 
 //
 //
-void Display_2in13v2::copy( Canvas &canvas, uint8_t x, uint8_t y, uint8_t width, uint8_t height )
+void Display_2in13v2::copy( Canvas &canvas, uint16_t x, uint16_t y, uint16_t width, uint16_t height )
 {
-	uint8_t drawn_width = min( width ? width : static_cast< uint16_t >( canvas.width() ), m_width );
-	uint8_t drawn_height = min( height ? height : static_cast< uint16_t >( canvas.height() ), m_height );
-	uint8_t bytes = ( drawn_height + 7 ) / 8;
+	uint16_t drawn_width = min( width ? width : static_cast< uint16_t >( canvas.width() ), m_width );
+	uint16_t drawn_height = min( height ? height : static_cast< uint16_t >( canvas.height() ), m_height );
+	uint16_t bytes = ( ( m_lanscape ? drawn_height : drawn_width ) + 7 ) / 8;
 	
+
 	for( uint8_t loop = 0; loop < 2; loop++ )
 	{
-		if( !loop || m_fullUpdate )
+		if( !loop || m_fullUpdated )
 		{
 			uint8_t cmd = !loop ? WRITE_RAM : WRITE_SHADOW_RAM;
-			for( uint8_t idx1 = 0; idx1 < drawn_width; idx1++ )
-			{
-				const uint8_t *image = canvas.image( idx1, 0 );
-				setMemoryPointer( m_width - 1 - idx1 - x, y );
-				sendCommand( cmd );
-				for( uint8_t i = 0; i < bytes; i ++ )
+			if( m_lanscape )
+			{	//	landscape
+				for( uint16_t idx1 = 0; idx1 < drawn_width; idx1++ )
 				{
-					sendData( *image );
-					image++;
+					const uint8_t *image = canvas.image( idx1, 0 );
+					setMemoryPointer( m_width - 1 - idx1 - x, y );
+					sendCommand( cmd );
+					for( uint16_t i = 0; i < bytes; i ++ )
+					{
+						sendData( *image );
+						image++;
+					}
+				}
+			}
+			else
+			{	//	portrait
+				for( uint16_t idx1 = 0; idx1 < drawn_height; idx1++ )
+				{
+					const uint8_t *image = canvas.image( 0, idx1 );
+					setMemoryPointer( x, m_height - 1 - idx1 - y );
+					sendCommand( cmd );
+					for( uint16_t i = 0; i < bytes; i ++ )
+					{
+						sendData( *image );
+						image++;
+					}
 				}
 			}
 		}
 	}
-
 }    
-
 
 }
