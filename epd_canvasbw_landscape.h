@@ -1,17 +1,16 @@
-#ifndef __epd_canvasbw_H__
-#define __epd_canvasbw_H__
-//https://github.com/adafruit/Adafruit_EPD/blob/master/Adafruit_SSD1675B.cpp
+#ifndef __epd_canvasbw_landscape_H__
+#define __epd_canvasbw_landscape_H__
 #include "epd_canvas.h"
 
 namespace Epd
 {
 template< uint8_t _width_, uint8_t _height_ >
-class CanvasBW : public Canvas
+class CanvasBW_Landscape : public Canvas
 {
 	public:
 		//
 		//
-		CanvasBW() :
+		CanvasBW_Landscape() :
 			Canvas( _width_, _height_ ),
 			m_alignedHeight( _height_ + ( ( _height_ % 8 ) ? 8 - ( _height_ % 8 ) : 0 ) )
 		{
@@ -78,12 +77,6 @@ class CanvasBW : public Canvas
 
 
 	protected:
-		inline void swap( int16_t &x, int16_t &y )
-		{
-			x ^= y;
-			y ^= x;
-			x ^= y;
-		}
 	private:
 		uint8_t m_alignedHeight;
 		uint8_t m_buffer[ _width_ * ( ( _height_ + 7 ) / 8 ) ];
