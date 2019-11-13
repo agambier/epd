@@ -255,7 +255,8 @@ void Display_2in13v2::copy( Canvas &canvas, uint16_t x, uint16_t y, uint16_t wid
 				for( uint16_t idx1 = 0; idx1 < drawn_height; idx1++ )
 				{
 					const uint8_t *image = canvas.image( 0, idx1 );
-					setMemoryPointer( x, m_height - 1 - idx1 - y );
+					//setMemoryPointer( x, m_height - 1 - idx1 - y );
+					setMemoryPointer( x, idx1 + y );
 					sendCommand( cmd );
 					for( uint16_t i = 0; i < bytes; i ++ )
 					{

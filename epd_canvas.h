@@ -22,7 +22,7 @@ class Canvas : public Adafruit_GFX
 		}
 		virtual uint16_t memorySize() const = 0;
 		virtual const uint8_t* image() const = 0;
-		virtual const uint8_t* image( uint8_t x, uint8_t y ) const;
+		virtual const uint8_t* image( uint8_t x, uint8_t y ) const = 0;
 	private:
 };
 //	----- inline function -----
