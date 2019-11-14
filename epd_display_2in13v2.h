@@ -1,7 +1,6 @@
 #ifndef __edp_display_2in13v2_H__
 #define __edp_display_2in13v2_H__
 
-#include <gpiopin.h>
 #include "epd_display.h"
 
 namespace Epd
@@ -51,9 +50,6 @@ class Display_2in13v2 : public Display
 		};
 
 		void initializeLut();
-		void spiTransfer( uint8_t data );
-		void sendCommand( uint8_t command );
-		void sendData( uint8_t data );
 		void setMemoryPointer( uint8_t x, uint8_t y );
 
 };

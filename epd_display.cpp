@@ -26,25 +26,33 @@ bool Display::initializePins()
 		return false;
 
 	//	CS
-	m_cs->setActiveLow();
 	m_cs->setMode( OUTPUT );
+	m_cs->setActiveLow();
+	m_cs->setTriggerMode( Gpio::Pin::Level );
+	m_cs->setFilter( true );
 
 	//	DC
-	m_dc->setActiveHigh();
 	m_dc->setMode( OUTPUT );
+	m_dc->setActiveHigh();
+	m_dc->setTriggerMode( Gpio::Pin::Level );
+	m_dc->setFilter( true );
 
 	//	Reset
 	if( nullptr != m_reset )
 	{
-		m_reset->setActiveLow();
 		m_reset->setMode( OUTPUT );
+		m_reset->setActiveLow();
+		m_reset->setTriggerMode( Gpio::Pin::Level );
+		m_reset->setFilter( false );
 	}
 
 	//	busy
 	if( nullptr != m_busy )
 	{
-		m_busy->setActiveHigh();
 		m_busy->setMode( INPUT );
+		m_busy->setActiveHigh();
+		m_busy->setTriggerMode( Gpio::Pin::Level );
+		m_busy->setFilter( false );
 	}
 
 	return true;
@@ -67,9 +75,9 @@ void Display::waitUntilIdle()
 //
 void Display::spiTransfer( uint8_t data )
 {
-    m_cs->activate();
+//    m_cs->activate();
     SPI.transfer( data );
-    m_cs->deactivate();
+//    m_cs->deactivate();
 }
 
 //

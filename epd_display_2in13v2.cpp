@@ -36,6 +36,7 @@ bool Display_2in13v2::activate( bool fullUpdate )
 
 	m_fullUpdated = fullUpdate;
 	waitUntilIdle();
+	m_cs->activate();
     if( fullUpdate) 
 	{
 		sendCommand( SW_RESET ); 
@@ -97,6 +98,7 @@ bool Display_2in13v2::activate( bool fullUpdate )
     sendData( 0 );
     sendData( ( ( m_lanscape ? m_width : m_height ) - 1 ) & 0xff );
     sendData( 0 );
+	m_cs->deactivate();
 
 	waitUntilIdle();
 
@@ -158,34 +160,10 @@ void Display_2in13v2::initializeLut()
 
 //
 //
-void Display_2in13v2::spiTransfer( uint8_t data )
-{
-    m_cs->activate();
-    SPI.transfer( data );
-    m_cs->deactivate();
-}
-
-//
-//
-void Display_2in13v2::sendCommand( uint8_t command )
-{
-    m_dc->deactivate();
-    spiTransfer( command );
-}
-
-//
-//
-void Display_2in13v2::sendData( uint8_t data )
-{
-    m_dc->activate();
-    spiTransfer( data );
-}
-
-//
-//
 void Display_2in13v2::clear() 
 {
 	uint16_t size = ( m_lanscape ? m_width : m_height ) * m_blockSize;
+	m_cs->activate();
 	for( uint8_t loop = 0; loop < 2; loop ++ )
 	{
 		if( !loop || m_fullUpdated )
@@ -195,18 +173,23 @@ void Display_2in13v2::clear()
 			for( uint16_t i = 0; i < size; i++ )
 			{
 				sendData( 0xff );
+				//wdt_reset();
+				delay( 0 );
 			}
 		}
 	}
+	m_cs->deactivate();
 }
 
 //
 //
 void Display_2in13v2::update() 
 {
+	m_cs->activate();
     sendCommand( DISPLAY_UPDATE_CONTROL_2 );
     sendData( m_fullUpdated ? 0xC7 : 0x0C );
     sendCommand( MASTER_ACTIVATION );
+	m_cs->deactivate();
     waitUntilIdle();
 }
 
@@ -231,6 +214,7 @@ void Display_2in13v2::copy( Canvas &canvas, uint16_t x, uint16_t y, uint16_t wid
 	uint16_t bytes = ( ( m_lanscape ? drawn_height : drawn_width ) + 7 ) / 8;
 	
 
+	m_cs->activate();
 	for( uint8_t loop = 0; loop < 2; loop++ )
 	{
 		if( !loop || m_fullUpdated )
@@ -240,6 +224,7 @@ void Display_2in13v2::copy( Canvas &canvas, uint16_t x, uint16_t y, uint16_t wid
 			{	//	landscape
 				for( uint16_t idx1 = 0; idx1 < drawn_width; idx1++ )
 				{
+					delay( 0 );
 					const uint8_t *image = canvas.image( idx1, 0 );
 					setMemoryPointer( m_width - 1 - idx1 - x, y );
 					sendCommand( cmd );
@@ -254,6 +239,7 @@ void Display_2in13v2::copy( Canvas &canvas, uint16_t x, uint16_t y, uint16_t wid
 			{	//	portrait
 				for( uint16_t idx1 = 0; idx1 < drawn_height; idx1++ )
 				{
+					delay( 0 );
 					const uint8_t *image = canvas.image( 0, idx1 );
 					//setMemoryPointer( x, m_height - 1 - idx1 - y );
 					setMemoryPointer( x, idx1 + y );
@@ -267,6 +253,7 @@ void Display_2in13v2::copy( Canvas &canvas, uint16_t x, uint16_t y, uint16_t wid
 			}
 		}
 	}
+	m_cs->deactivate();
 }    
 
 }
