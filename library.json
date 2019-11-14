@@ -17,12 +17,20 @@
     }
   ],
   "dependencies":
-  {
-    "name": "Adafruit GFX Library",
-    "authors": "Adafruit",
-	"frameworks": "arduino",
-	"version": "https://github.com/adafruit/Adafruit-GFX-Library"
-  },
+  [
+	{
+		"name": "Adafruit GFX Library",
+		"authors": "Adafruit",
+		"frameworks": "arduino",
+		"version": "https://github.com/adafruit/Adafruit-GFX-Library"
+	},
+	{
+		"name": "GPIO",
+		"authors": "Alexandre Gambier",
+		"frameworks": "arduino",
+		"version": "https://github.com/agambier/gpio.git"
+	}
+  ],
   "version": "1.0.0",
   "frameworks": "arduino",
   "platforms": "*"
