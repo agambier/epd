@@ -1,0 +1,29 @@
+{
+  "name": "EPD",
+  "keywords": "epd, ePaper, display",
+  "description": "Arduino Library to handle ePaper displays",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/agambier/epd.git"
+  },
+  "authors": 
+  [
+    {
+      "name": "Alexandre Gambier",
+      "email": "agambier.dev@gmail.com",
+      "url": "https://github.com/agambier",
+      "maintainer": true
+    }
+  ],
+  "dependencies":
+  {
+    "name": "Adafruit GFX Library",
+    "authors": "Adafruit",
+	"frameworks": "arduino",
+	"version": "https://github.com/adafruit/Adafruit-GFX-Library"
+  },
+  "version": "1.0.0",
+  "frameworks": "arduino",
+  "platforms": "*"
+}
