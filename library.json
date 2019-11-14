@@ -31,7 +31,7 @@
 		"version": "https://github.com/agambier/gpio.git"
 	}
   ],
-  "version": "1.0.0",
+  "version": "1.0.1",
   "frameworks": "arduino",
   "platforms": "*"
 }
